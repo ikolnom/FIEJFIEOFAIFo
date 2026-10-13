@@ -69,8 +69,60 @@ def getIntersection(g1,g2,h1,h2, width):
     y = math.sqrt((r2**2) - ((x-m2)**2))
     return (x,width-y)
 
+def getGeodesicIntersections(g1,g2,fn, interval_size, width):
+    intersection_points = []
 
-interval_size=420
+    g1p = fracToPixel(g1, interval_size)
+    g2p = fracToPixel(g2, interval_size)
+
+    m = (g1p+g2p)/2
+    r = (g2p-g1p)/2
+
+    eta = math.floor(g2[0]/g2[1])
+
+    for x in range(0, eta+1):
+        x = fracToPixel([x,1], interval_size)
+        intersection_points.append((x, width - math.sqrt((r**2) - ((x-m)**2))))
+
+    g = g2[0]/g2[1]
+    fareys = gen_farey(fn)
+
+    for farey in fareys:
+        for k in range(0, len(farey)):
+            p = eta + (farey[k][0]/farey[k][1])
+            if g < p:
+
+                h1 = fracToPixel((farey[k-1][0]+(eta*farey[k-1][1]), farey[k-1][1]), interval_size)
+                h2 = fracToPixel((farey[k][0]+(eta*farey[k][1]), farey[k][1]), interval_size)
+                v1 = fracToPixel(g1, interval_size)
+                v2 = fracToPixel(g2, interval_size)
+
+                intersection_points.append(getIntersection(v1,v2,h1,h2,width))
+                print(p)
+                break
+    return intersection_points
+
+def drawIntersections(intersections, draw, n):
+    seq = gen_scf(n)
+    count = 0
+    lr = 0
+    for pair in intersections:
+
+        if len(seq)==0:
+            break
+
+        if count == seq[0][0]:
+            lr += 1
+            count = 0
+            seq.pop(0)
+
+        if lr % 2 == 0:
+            draw.circle(xy=(round(pair[0]), round(pair[1])), radius = 10, fill = (255,0,0))
+        elif lr % 2 == 1:
+            draw.circle(xy=(round(pair[0]), round(pair[1])), radius = 10, fill = (0,0,255))
+        count += 1
+
+interval_size=840
 length = interval_size*5
 width = (interval_size*5)//2
 canvas_size = interval_size*5
@@ -79,16 +131,14 @@ im = Image.new(mode="RGB", size=(canvas_size, canvas_size//2))
 draw = ImageDraw.Draw(im)
 draw_farey(4,interval_size,draw,length,width,canvas_size)
 
+endpoint = (23,7)
+
 p1 = fracToPixel((-1,2), interval_size)
-p2 = fracToPixel((7,3), interval_size)
+p2 = fracToPixel(endpoint, interval_size)
 
-drawGeodesic(p1,p2, draw)
+drawGeodesic(p1,p2,draw)
+intersections = getGeodesicIntersections((-1,2),endpoint,4, interval_size, width)
 
-p3 = fracToPixel((0,1), interval_size)
-p4 = fracToPixel((4,1), interval_size)
-
-drawGeodesic(p3,p4, draw)
-
-draw.circle(xy=getIntersection(p1,p2,p3,p4, width), radius = 10)
+drawIntersections(intersections, draw, endpoint)
 
 im.show()
