@@ -13,9 +13,14 @@ def gen_scf(n):
         num = n[1]
         den = n[0]
     while num != 1:
+
         tmp = num
         num = den
         den = tmp
+
+        if den == 0:
+            break
+
 
         a = math.floor(num / den)
         seq.append((a,0))
@@ -56,7 +61,7 @@ def draw_farey(farey_level, interval_size, draw, length, width, canvas_size):
 def fracToPixel(frac, interval_size):
     return interval_size + (frac[0]*interval_size // frac[1])
 
-def drawGeodesic(p1, p2, draw):
+def drawGeodesic(p1, p2, draw, intersections):
     draw.circle(xy=(((p1+p2)//2),width), radius=((p2 - p1) //2))
 
 def getIntersection(g1,g2,h1,h2, width):
@@ -117,9 +122,9 @@ def drawIntersections(intersections, draw, n):
             seq.pop(0)
 
         if lr % 2 == 0:
-            draw.circle(xy=(round(pair[0]), round(pair[1])), radius = 10, fill = (255,0,0))
+            draw.circle(xy=(round(pair[0]), round(pair[1])), radius = 5, fill = (255,0,0))
         elif lr % 2 == 1:
-            draw.circle(xy=(round(pair[0]), round(pair[1])), radius = 10, fill = (0,0,255))
+            draw.circle(xy=(round(pair[0]), round(pair[1])), radius = 5, fill = (0,255,0))
         count += 1
 
 interval_size=840
@@ -129,15 +134,15 @@ canvas_size = interval_size*5
 
 im = Image.new(mode="RGB", size=(canvas_size, canvas_size//2))
 draw = ImageDraw.Draw(im)
-draw_farey(4,interval_size,draw,length,width,canvas_size)
+draw_farey(5,interval_size,draw,length,width,canvas_size)
 
-endpoint = (23,7)
+endpoint = (23,10)
 
 p1 = fracToPixel((-1,2), interval_size)
 p2 = fracToPixel(endpoint, interval_size)
 
 drawGeodesic(p1,p2,draw)
-intersections = getGeodesicIntersections((-1,2),endpoint,4, interval_size, width)
+intersections = getGeodesicIntersections((-1,2),endpoint,5, interval_size, width)
 
 drawIntersections(intersections, draw, endpoint)
 
