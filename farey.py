@@ -107,12 +107,20 @@ def getGeodesicIntersections(g1,g2,fn, interval_size, width):
                 break
     return intersection_points
 
-def drawIntersections(intersections, draw, n):
+def drawNewGeodesic(p1, p2, draw, intersections, interval_size, width, n):
+    leftCuts = Image.new("RGBA", size=(canvas_size, canvas_size//2))
+    rightCuts = Image.new("RGBA", size=(canvas_size, canvas_size//2))
+
+    leftDraw = ImageDraw.Draw(leftCuts)
+    rightDraw = ImageDraw.Draw(rightCuts)
+
+    leftDraw.circle(xy=(((p1+p2)//2),width), radius=((p2 - p1) //2), width= 1, outline=(255,0,0))
+    rightDraw.circle(xy=(((p1+p2)//2),width), radius=((p2 - p1) //2), width= 1, outline=(0,255,0))
+
     seq = gen_scf(n)
     count = 0
     lr = 0
-    for pair in intersections:
-
+    for i in range(0, len(intersections)):
         if len(seq)==0:
             break
 
@@ -122,28 +130,34 @@ def drawIntersections(intersections, draw, n):
             seq.pop(0)
 
         if lr % 2 == 0:
-            draw.circle(xy=(round(pair[0]), round(pair[1])), radius = 5, fill = (255,0,0))
-        elif lr % 2 == 1:
-            draw.circle(xy=(round(pair[0]), round(pair[1])), radius = 5, fill = (0,255,0))
+            if intersections[i+1][1] > intersections[i][1]:
+                leftDraw.rectangle(xy=[(intersections[i][0], intersections[i][1]), (intersections[i+1][0], intersections[i+1][1])], fill = (0,0,0,0))
+            else:
+                leftDraw.rectangle(xy=[(intersections[i][0], intersections[i+1][1]), (intersections[i+1][0], intersections[i][1])], fill = (0,0,0,0))
         count += 1
+
+    rightCuts.alpha_composite(leftCuts, (0,0))
+    return rightCuts
+
+
 
 interval_size=840
 length = interval_size*5
 width = (interval_size*5)//2
 canvas_size = interval_size*5
 
-im = Image.new(mode="RGB", size=(canvas_size, canvas_size//2))
+im = Image.new(mode="RGBA", size=(canvas_size, canvas_size//2), color=(0,0,0,255))
 draw = ImageDraw.Draw(im)
-draw_farey(5,interval_size,draw,length,width,canvas_size)
+draw_farey(7,interval_size,draw,length,width,canvas_size)
 
-endpoint = (23,10)
+endpoint = (7,24)
 
 p1 = fracToPixel((-1,2), interval_size)
 p2 = fracToPixel(endpoint, interval_size)
 
-drawGeodesic(p1,p2,draw)
-intersections = getGeodesicIntersections((-1,2),endpoint,5, interval_size, width)
+intersections = getGeodesicIntersections((-1,2),endpoint,6, interval_size, width)
+new = drawNewGeodesic(p1,p2,draw,intersections, interval_size, width, endpoint)
 
-drawIntersections(intersections, draw, endpoint)
+im.alpha_composite(new)
 
 im.show()
